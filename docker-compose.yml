@@ -1,0 +1,21 @@
+version: "2"
+services:
+  bar:
+    depends_on:
+      - foo
+    build:
+      context: ./bar
+    volumes:
+      - ./bar:/bar
+    ports:
+      - "8001:8001"
+    command: ["./wait-for-it.sh", "foo:8002", "--", "npm", "start"]
+
+  foo:
+    build:
+      context: ./foo
+    volumes:
+      - ./foo:/foo
+    ports:
+      - "8002:8002"
+    command: npm start
