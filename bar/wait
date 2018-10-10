@@ -1,0 +1,71 @@
+#!/usr/local/bin/node
+'use strict';
+
+const net = require('net');
+const child_process = require('child_process');
+
+const args = process.argv.slice(2);
+let waitList = [];
+const DEFAULT_TIMEOUT = 15 * 1000;
+let waitEntity;
+
+while (args.length) {
+  let arg = args.shift();
+  waitEntity = {};
+  waitEntity.timeout = arg === '-t' ? Number(args.shift()) * 1000: DEFAULT_TIMEOUT;
+  if (arg === '-t') {
+    arg = args.shift();
+  }
+
+  if (arg === '-h') {
+    const hostPort = args.shift().split(':');
+    if (!hostPort.length) {
+      console.error(`Unable to locate host and port. "${hostPort}" received`);
+      process.exit(1);
+    }
+    waitEntity.host = hostPort.length === 2 ? hostPort[0] : 'localhost';
+    waitEntity.port = hostPort.length === 2 ? hostPort[1] : hostPort[2];
+  } else {
+    break;
+  }
+
+  waitList.push(waitEntity);
+}
+
+const command = args.length ? args.shift() : 'echo';
+const commandArgs = args.length ? args : [`No command was defined`];
+
+waitList.map(waitConnection);
+
+function waitConnection(entity) {
+  const timeout = setTimeout(() => {
+    console.error(`Timeout ${Math.round(entity.timeout / 1000)}s for entity ${entity.host}:${entity.port} exceeded`);
+    process.exit(1);
+  }, entity.timeout);
+
+  const socket = net.connect(entity.port, entity.host, connectCb);
+  socket.on('error', (e) => {
+    if (e.code === 'ECONNREFUSED') {
+      socket.removeListener('connect', connectCb);
+      socket.connect(entity.port, entity.host, connectCb);
+    }
+  });
+
+  function connectCb() {
+    console.log(`Connection to "${entity.host}:${entity.port}" established`);
+    clearTimeout(timeout);
+    socket.end();
+    waitList = waitList.filter(el => !(el.host === entity.host && el.port === el.port));
+    runCommand();
+  }
+}
+
+function runCommand() {
+  if (!waitList.length) {
+    child_process.spawn(command, commandArgs, {
+      cwd: process.cwd(),
+      shell: true,
+      stdio: 'inherit'
+    });
+  }
+}

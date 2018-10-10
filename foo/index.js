@@ -1,7 +1,7 @@
 'use strict';
 
 const PORT = 8002;
-const TIMEOUT = 10000;
+const TIMEOUT = 10 * 1000;
 const http = require('http');
 const server = http.createServer((req, res) => {
   res.end({res: 'foo'});
