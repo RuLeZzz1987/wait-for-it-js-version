@@ -1,4 +1,4 @@
-version: "2"
+version: "2.2"
 services:
   bar:
     depends_on:
@@ -9,7 +9,11 @@ services:
       - ./bar:/bar
     ports:
       - "8001:8001"
-    command: wait -h foo:8002 -- npm start
+    init: true
+    entrypoint:
+      - /bin/sh
+      - -c
+      - "wait-for -h foo:8002 && npm start"
 
   foo:
     build:

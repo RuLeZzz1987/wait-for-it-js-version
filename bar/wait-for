@@ -2,7 +2,6 @@
 'use strict';
 
 const net = require('net');
-const child_process = require('child_process');
 
 const args = process.argv.slice(2);
 let waitList = [];
@@ -32,9 +31,6 @@ while (args.length) {
   waitList.push(waitEntity);
 }
 
-const command = args.length ? args.shift() : 'echo';
-const commandArgs = args.length ? args : [`No command was defined`];
-
 waitList.map(waitConnection);
 
 function waitConnection(entity) {
@@ -56,16 +52,6 @@ function waitConnection(entity) {
     clearTimeout(timeout);
     socket.end();
     waitList = waitList.filter(el => !(el.host === entity.host && el.port === el.port));
-    runCommand();
   }
 }
 
-function runCommand() {
-  if (!waitList.length) {
-    child_process.spawn(command, commandArgs, {
-      cwd: process.cwd(),
-      shell: true,
-      stdio: 'inherit'
-    });
-  }
-}

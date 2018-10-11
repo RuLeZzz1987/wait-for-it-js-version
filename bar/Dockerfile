@@ -1,8 +1,8 @@
 FROM node:8-alpine
 
 COPY ./ /bar
-COPY ./wait /usr/bin/wait
-RUN chmod +x /usr/bin/wait
+COPY wait-for /usr/bin/wait-for
+RUN chmod +x /usr/bin/wait-for
 
 WORKDIR /bar
 
